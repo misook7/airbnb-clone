@@ -5,9 +5,8 @@ import { NextResponse } from 'next/server';
 export async function POST(
   request: Request,
 ) {
-  console.log(request)
   const body = await request.json();
-  console.log('body json: ', body);
+
   const {
     email,
     name,
