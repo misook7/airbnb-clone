@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { AiFillGithub } from 'react-icons/ai';
 import { FcGoogle } from 'react-icons/fc';
-import { MouseEvent, useCallback, useState } from 'react';
+import { MouseEvent, useCallback, useEffect, useState } from 'react';
 import {
   FieldValues,
   SubmitHandler,
@@ -18,13 +18,21 @@ import Button from '../Button';
 import useLoginModal from '@/app/hooks/useLoginModal';
 import React from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const LoginModal= () => {
   const router = useRouter();
   const registerModal = useRegisterModal();
   const loginModal = useLoginModal();
   const [isLoading, setIsLoading] = useState(false);
+  const params = useSearchParams();
+  
+  useEffect(() => {
+    const callbackError = params?.get("error");
+    if (callbackError === "OAuthAccountNotLinked") {
+      toast.error("whoops, there may already be an account with that email");
+    }
+  }, [params]);
 
   const {
     register,
@@ -41,7 +49,6 @@ const LoginModal= () => {
 
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
     setIsLoading(true);
-
     signIn('credentials', {
       ...data,
       redirect: false,
@@ -96,7 +103,9 @@ const LoginModal= () => {
         label="Continue with Google"
         icon={FcGoogle}
         onClick={() => {
-          signIn('google')
+          signIn('google', {
+            callbackUrl: '/'
+          })
         }}
       />
       <Button

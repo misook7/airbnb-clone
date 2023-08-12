@@ -1,8 +1,12 @@
 "use client";
 
 import useRentModal from "@/app/hooks/useRentModal";
-import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useState } from "react";
+import { FieldValues, useForm } from "react-hook-form";
 import Heading from "../Heading";
+import CategoryInput from "../inputs/CategoryInput";
+import CountrySelect from "../inputs/CountrySelect";
 import { categories } from "../navbar/Categories";
 import Modal from "./Modal";
 
@@ -18,6 +22,45 @@ enum STEPS {
 const RentModal = () => {
   const rentModal = useRentModal();
   const [step, setStep] = useState(STEPS.CATEGORY);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: {
+      errors,
+    },
+    reset
+  } = useForm<FieldValues>({
+    defaultValues: {
+      category: '',
+      location: null,
+      guestCount: 1,
+      roomCount: 1,
+      bathroomCount: 1,
+      imageSrc: '',
+      price: 1,
+      title: '',
+      description: '',
+    }
+  })
+
+  const category = watch('category');
+  const location = watch('location');
+
+  // lazy loading
+  const Map = useMemo(() => dynamic(() => import('../Map'), {
+    ssr: false,
+  }), [location])
+
+  const setCustomValue = (id: string, value: any) => {
+    setValue(id, value, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+  }
 
   const onBack = () => {
     setStep((value) => value - 1);
@@ -43,6 +86,7 @@ const RentModal = () => {
     return "Back";
   }, [step]);
 
+
   let bodyContent = (
     <div className="flex flex-col gap-8">
       <Heading
@@ -61,18 +105,50 @@ const RentModal = () => {
       >
         {categories.map((item) => (
           <div key={item.label} className="col-span-1">
-
+            <CategoryInput
+              onClick={(category) => setCustomValue('category', category)}
+              selected={category === item.label}
+              label={item.label}
+              icon={item.icon}
+            />
           </div>
         ))}
       </div>
     </div>
   );
 
+  if (step === STEPS.LOCATION) {
+    bodyContent = (
+      <div className="flex flex-col gap-8">
+        <Heading 
+          title="Where is your place located?"
+          subtitle="Help guests find you!"        
+        />
+        <CountrySelect
+          value={location}
+          onChange={(value)=> setCustomValue('location', value)}
+        />
+
+        <Map 
+          center={location?.latlng}
+        />
+      </div>
+    )
+  }
+
+  if (step === STEPS.LOCATION) {
+    bodyContent = (
+      <div className="flex flex-col gap-8">
+        
+      </div>
+    )
+  }
+
   return (
     <Modal
       isOpen={rentModal.isOpen}
       onClose={rentModal.onClose}
-      onSubmit={rentModal.onClose}
+      onSubmit={onNext}
       actionLabel={actionLabel}
       secondaryActionLabel={secondaryActionLabel}
       secondaryAction={step === STEPS.CATEGORY ? undefined : onBack}
