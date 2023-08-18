@@ -33,7 +33,10 @@ export default async function RootLayout({
         <RentModal />
         <LoginModal />
         <Navbar currentUser={currentUser}/>
-        {children}
+        {/* Fix navbar will overlay other content, so add padding to avoid it */}
+        <div className="pb-20 pt-28">
+         {children}
+        </div>
       </body>
     </html>
   )
